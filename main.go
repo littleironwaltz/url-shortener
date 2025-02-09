@@ -83,7 +83,7 @@ func setupHandlers(store *URLStore) http.Handler {
 		json.NewEncoder(w).Encode(resp)
 	})
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
