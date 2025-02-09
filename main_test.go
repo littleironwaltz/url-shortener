@@ -2,9 +2,11 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 )
@@ -12,6 +14,57 @@ import (
 func TestURLShortener(t *testing.T) {
 	store := NewURLStore()
 	handler := setupHandlers(store)
+
+	// Test context cancellation
+	t.Run("Context Cancellation", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel() // Cancel immediately to test handling
+
+		if _, _, err := store.Get(ctx, "test"); err != context.Canceled {
+			t.Errorf("Expected context.Canceled error, got %v", err)
+		}
+
+		if err := store.Set(ctx, "test", "http://example.com"); err != context.Canceled {
+			t.Errorf("Expected context.Canceled error, got %v", err)
+		}
+	})
+
+	// Test logging functionality
+	t.Run("Logging", func(t *testing.T) {
+		// Redirect log output for testing
+		oldStdout := os.Stdout
+		oldStderr := os.Stderr
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+		os.Stderr = w
+		
+		store := NewURLStore() // Create new store to test logging
+		ctx := context.Background()
+		
+		// Test info logging
+		store.Set(ctx, "test", "http://example.com")
+		
+		// Test warning logging
+		store.Get(ctx, "nonexistent")
+		
+		// Restore original output
+		w.Close()
+		os.Stdout = oldStdout
+		os.Stderr = oldStderr
+		
+		// Read captured output
+		output := make([]byte, 1024)
+		n, _ := r.Read(output)
+		logOutput := string(output[:n])
+		
+		// Verify log messages
+		if !strings.Contains(logOutput, "INFO") {
+			t.Error("Expected INFO log message not found")
+		}
+		if !strings.Contains(logOutput, "WARN") {
+			t.Error("Expected WARN log message not found")
+		}
+	})
 	
 	// Test /shorten endpoint
 	t.Run("Shorten URL", func(t *testing.T) {
@@ -63,7 +116,10 @@ func TestURLShortener(t *testing.T) {
 		// First, create a short URL
 		originalURL := "https://example.com"
 		code := "testcode"
-		store.Set(code, originalURL)
+		ctx := context.Background()
+		if err := store.Set(ctx, code, originalURL); err != nil {
+			t.Fatalf("Failed to store URL: %v", err)
+		}
 
 		req := httptest.NewRequest(http.MethodGet, "/"+code, nil)
 		w := httptest.NewRecorder()
