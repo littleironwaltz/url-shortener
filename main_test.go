@@ -11,6 +11,7 @@ import (
 
 func TestURLShortener(t *testing.T) {
 	store := NewURLStore()
+	handler := setupHandlers(store)
 	
 	// Test /shorten endpoint
 	t.Run("Shorten URL", func(t *testing.T) {
@@ -23,7 +24,7 @@ func TestURLShortener(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/shorten", bytes.NewReader(body))
 		w := httptest.NewRecorder()
 
-		http.DefaultServeMux.ServeHTTP(w, req)
+		handler.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("Expected status code %d, got %d", http.StatusOK, w.Code)
@@ -50,7 +51,7 @@ func TestURLShortener(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/shorten", strings.NewReader(reqBody))
 		w := httptest.NewRecorder()
 
-		http.DefaultServeMux.ServeHTTP(w, req)
+		handler.ServeHTTP(w, req)
 
 		if w.Code != http.StatusBadRequest {
 			t.Errorf("Expected status code %d, got %d", http.StatusBadRequest, w.Code)
@@ -67,7 +68,7 @@ func TestURLShortener(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/"+code, nil)
 		w := httptest.NewRecorder()
 
-		http.DefaultServeMux.ServeHTTP(w, req)
+		handler.ServeHTTP(w, req)
 
 		if w.Code != http.StatusFound {
 			t.Errorf("Expected status code %d, got %d", http.StatusFound, w.Code)
@@ -84,7 +85,7 @@ func TestURLShortener(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/nonexistent", nil)
 		w := httptest.NewRecorder()
 
-		http.DefaultServeMux.ServeHTTP(w, req)
+		handler.ServeHTTP(w, req)
 
 		if w.Code != http.StatusNotFound {
 			t.Errorf("Expected status code %d, got %d", http.StatusNotFound, w.Code)

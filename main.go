@@ -53,11 +53,9 @@ type ShortenResponse struct {
 	ShortURL string `json:"short_url"`
 }
 
-func main() {
-	rand.Seed(time.Now().UnixNano())
-	store := NewURLStore()
-
-	http.HandleFunc("/shorten", func(w http.ResponseWriter, r *http.Request) {
+func setupHandlers(store *URLStore) http.Handler {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/shorten", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
@@ -106,8 +104,17 @@ func main() {
 		http.Redirect(w, r, url, http.StatusFound)
 	})
 
+	return mux
+}
+
+func main() {
+	rand.Seed(time.Now().UnixNano())
+	store := NewURLStore()
+	
+	handler := setupHandlers(store)
+	
 	log.Printf("Starting server on :8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(":8080", handler); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}
 }
