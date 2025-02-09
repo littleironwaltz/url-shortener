@@ -9,7 +9,6 @@ import (
 	"os"
 	"strings"
 	"testing"
-	"time"
 )
 
 func TestURLShortener(t *testing.T) {
@@ -117,7 +116,10 @@ func TestURLShortener(t *testing.T) {
 		// First, create a short URL
 		originalURL := "https://example.com"
 		code := "testcode"
-		store.Set(code, originalURL)
+		ctx := context.Background()
+		if err := store.Set(ctx, code, originalURL); err != nil {
+			t.Fatalf("Failed to store URL: %v", err)
+		}
 
 		req := httptest.NewRequest(http.MethodGet, "/"+code, nil)
 		w := httptest.NewRecorder()
