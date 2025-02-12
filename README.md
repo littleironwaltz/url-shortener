@@ -1,28 +1,28 @@
 # URL Shortener Service
 
-シンプルなURL短縮サービスです。長いURLを短いURLに変換し、短いURLにアクセスすると元のURLにリダイレクトします。
+A simple URL shortening service that converts long URLs into short ones and redirects to the original URL when accessing the shortened URL.
 
-## 特徴
-- コンテキストサポート（キャンセル処理対応）
-- 構造化ログ（INFO, WARN, ERROR）
-- スレッドセーフなin-memoryストア
-- 詳細なエラーハンドリング
+## Features
+- Context support (with cancellation handling)
+- Structured logging (INFO, WARN, ERROR)
+- Thread-safe in-memory store
+- Detailed error handling
 
-## サービス起動方法
+## How to Start the Service
 
-1. プロジェクトのルートディレクトリで以下のコマンドを実行します：
+1. Run the following command in the project root directory:
 
 ```bash
 go run main.go
 ```
 
-サーバーは8080ポートで起動します。
+The server will start on port 8080.
 
-## 動作確認手順
+## Usage Instructions
 
-### 1. URLの短縮
+### 1. Shorten URL
 
-以下のcurlコマンドで長いURLを短縮URLに変換できます：
+You can convert a long URL into a shortened URL using the following curl command:
 
 ```bash
 curl -X POST http://localhost:8080/shorten \
@@ -30,7 +30,7 @@ curl -X POST http://localhost:8080/shorten \
   -d '{"url": "https://example.com/very/long/url/that/needs/shortening"}'
 ```
 
-成功すると以下のようなレスポンスが返ります：
+On success, you will receive a response like this:
 
 ```json
 {
@@ -38,67 +38,67 @@ curl -X POST http://localhost:8080/shorten \
 }
 ```
 
-### 2. リダイレクトの確認
+### 2. Verify Redirect
 
-生成された短縮URLにアクセスすると、元のURLにリダイレクトされます：
+When you access the shortened URL, you will be redirected to the original URL:
 
 ```bash
 curl -i http://localhost:8080/Ab3Cd9
 ```
 
-レスポンスには302ステータスコードと元のURLへのLocationヘッダーが含まれます。
+The response will include a 302 status code and a Location header pointing to the original URL.
 
-### エラーケース
+### Error Cases
 
-1. 存在しないコードの場合：
+1. For non-existent codes:
 ```bash
 curl -i http://localhost:8080/nonexistent
 ```
-404 Not Foundが返り、WARNレベルのログが出力されます。
+Returns 404 Not Found and outputs a WARN level log.
 
-2. 不正なリクエストの場合：
+2. For invalid requests:
 ```bash
 curl -X POST http://localhost:8080/shorten \
   -H "Content-Type: application/json" \
   -d '{"url": ""}'
 ```
-400 Bad Requestが返り、WARNレベルのログが出力されます。
+Returns 400 Bad Request and outputs a WARN level log.
 
-3. コンテキストのキャンセル：
-リクエストがキャンセルされた場合（タイムアウトなど）、ERRORレベルのログが出力され、適切なエラーレスポンスが返されます。
+3. Context cancellation:
+When a request is cancelled (e.g., timeout), an ERROR level log is output and an appropriate error response is returned.
 
-### ログレベル
-- INFO: 正常な操作（URL登録、リダイレクトなど）
-- WARN: 不正なリクエスト、存在しないURLなど
-- ERROR: 内部エラー、コンテキストのキャンセルなど
+### Log Levels
+- INFO: Normal operations (URL registration, redirects, etc.)
+- WARN: Invalid requests, non-existent URLs, etc.
+- ERROR: Internal errors, context cancellations, etc.
 
-## テストの実行
+## Running Tests
 
-以下のコマンドでユニットテストを実行できます：
+Run unit tests with the following command:
 
 ```bash
 go test -v
 ```
 
-データ競合のチェックを含むテストを実行する場合：
+To run tests including race condition checks:
 
 ```bash
 go test -race -v
 ```
 
-### テストケース
-1. URL短縮機能
-   - 正常なURL登録と短縮URLの生成
-   - 不正なリクエストのハンドリング
+### Test Cases
+1. URL Shortening Functionality
+   - Normal URL registration and short URL generation
+   - Invalid request handling
 
-2. リダイレクト機能
-   - 正常なリダイレクト
-   - 存在しないコードの処理
+2. Redirect Functionality
+   - Normal redirect operation
+   - Non-existent code handling
 
-3. コンテキストとキャンセル処理
-   - コンテキストのキャンセル時の動作
-   - タイムアウト処理
+3. Context and Cancellation Handling
+   - Context cancellation behavior
+   - Timeout handling
 
-4. ログ出力
-   - 各ログレベル（INFO/WARN/ERROR）の出力確認
-   - ログメッセージの内容検証
+4. Log Output
+   - Verification of each log level (INFO/WARN/ERROR)
+   - Log message content validation
